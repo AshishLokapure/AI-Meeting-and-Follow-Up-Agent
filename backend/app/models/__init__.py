@@ -4,7 +4,7 @@ from app.models.background_job import BackgroundJob
 from app.models.base import ModelBase
 from app.models.email_template import EmailTemplate
 from app.models.email_verification_token import EmailVerificationToken
-from app.models.enums import BackgroundJobStatus, LogLevel, MeetingStatus, NotificationChannel, NotificationStatus, ReminderStatus, TaskPriority, TaskStatus
+from app.models.enums import BackgroundJobStatus, EmployeeRole, EmployeeStatus, LogLevel, MeetingStatus, NotificationChannel, NotificationStatus, ReminderStatus, TaskPriority, TaskStatus
 from app.models.escalation_log import EscalationLog
 from app.models.meeting import Meeting
 from app.models.meeting_participant import MeetingParticipant
@@ -26,6 +26,8 @@ __all__ = [
     "Employee",
     "BackgroundJob",
     "BackgroundJobStatus",
+    "EmployeeRole",
+    "EmployeeStatus",
     "EmailTemplate",
     "EmailVerificationToken",
     "EscalationLog",

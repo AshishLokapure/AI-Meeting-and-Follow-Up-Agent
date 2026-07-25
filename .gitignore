@@ -1,60 +1,246 @@
-# Dependencies
-node_modules/
-frontend/node_modules/
-backend/venv/
-venv/
-.venv/
-*.egg-info/
+# =============================================================================
+# AI Meeting & Follow-Up Agent — .gitignore
+# =============================================================================
 
-# Python
+# =============================================================================
+# SECRETS & ENVIRONMENT — never commit these
+# =============================================================================
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+
+# Byte-compiled / optimised
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyo
 *.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+backend/venv/
+backend/.venv/
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+wheels/
+*.whl
+
+# Testing & coverage
 .pytest_cache/
-.mypy_cache/
-.ruff_cache/
 .coverage
 .coverage.*
 htmlcov/
+coverage.xml
+*.cover
+nosetests.xml
+test-results/
+junit.xml
 
-# Environment and secrets
-.env
-.env.*
-!.env.example
-*.env
-*.local
-*.pem
-*.key
-*.crt
+# Type checkers & linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytype/
 
-# Logs and runtime data
-*.log
-logs/
-backend/logs/
-backend/uploads/
-backend/temp/
-backend/tests/.pytest_cache/
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
 
-# Databases and local storage
-*.sqlite3
-*.db
-*.dump
+# Celery
+celerybeat-schedule
+celerybeat.pid
 
-# Frontend build output
+# =============================================================================
+# NODE / FRONTEND
+# =============================================================================
+
+node_modules/
+frontend/node_modules/
+
+# Build output
 frontend/dist/
 frontend/build/
+frontend/.output/
+frontend/.vinxi/
+frontend/.nitro/
 frontend/.vite/
 frontend/.turbo/
 frontend/coverage/
+dist/
+dist-ssr/
 
-# IDE / editor files
+# Package manager locks (keep only one — bun.lock is already tracked)
+# npm-debug.log*
+# yarn-debug.log*
+# yarn-error.log*
+# pnpm-debug.log*
+
+# TanStack / Vinxi generated
+frontend/.tanstack/
+.tanstack/
+
+# Wrangler / Cloudflare
+.wrangler/
+.dev.vars
+
+# =============================================================================
+# LOGS & RUNTIME
+# =============================================================================
+*.log
+logs/
+backend/logs/
+*.pid
+*.seed
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =============================================================================
+# UPLOADS & MEDIA (user-generated content — not for git)
+# =============================================================================
+backend/uploads/
+uploads/
+*.mp3
+*.mp4
+*.wav
+*.m4a
+*.webm
+*.ogg
+*.flac
+
+# =============================================================================
+# DATABASE
+# =============================================================================
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.dump
+*.sql.gz
+alembic/versions/*.pyc
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+.docker/
+docker-compose.override.yml
+
+# =============================================================================
+# IDE & EDITORS
+# =============================================================================
+
+# VS Code
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# JetBrains (PyCharm, WebStorm, etc.)
 .idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Vim / Neovim
 *.swp
 *.swo
+*~
+.netrwhist
 
-# OS files
+# Emacs
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+
+# =============================================================================
+# TEMPORARY & MISC
+# =============================================================================
+tmp/
+temp/
+backend/temp/
+*.tmp
+*.bak
+*.orig
+*.rej
+*.patch
+.cache/
+.parcel-cache/
+
+# =============================================================================
+# PROJECT-SPECIFIC
+# =============================================================================
+
+# Diagnostic / one-off scripts (not production code)
+backend/smtp_test.py
+backend/seed_db.py
+
+# Whisper model cache (large binary files)
+*.pt
+*.bin
+models/
+
+# AWS / cloud
+.aws/
+*.tfstate
+*.tfstate.*
+.terraform/

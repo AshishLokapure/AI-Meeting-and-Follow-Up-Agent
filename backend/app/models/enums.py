@@ -1,4 +1,4 @@
-﻿from enum import Enum
+from enum import Enum
 
 
 class MeetingStatus(str, Enum):
@@ -61,3 +61,25 @@ class BackgroundJobStatus(str, Enum):
     started = "started"
     succeeded = "succeeded"
     failed = "failed"
+
+
+class EmployeeStatus(str, Enum):
+    active = "active"
+    inactive = "inactive"
+    on_leave = "on_leave"
+
+
+class EmployeeRole(str, Enum):
+    admin = "admin"
+    manager = "manager"
+    developer = "developer"
+    ai_engineer = "ai_engineer"
+    ml_engineer = "ml_engineer"
+    backend_developer = "backend_developer"
+    frontend_developer = "frontend_developer"
+    qa_engineer = "qa_engineer"
+    hr = "hr"
+    marketing = "marketing"
+    sales = "sales"
+    devops = "devops"
+    custom = "custom"

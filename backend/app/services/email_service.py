@@ -311,6 +311,38 @@ class EmailService:
             },
         )
 
+    def send_employee_welcome(
+        self,
+        to: str,
+        employee_name: str,
+        employee_id: str,
+        temp_password: str,
+        department: str,
+        role: str,
+        login_url: str,
+        reset_url: str,
+        org_name: str = "Your Organization",
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
+        return self.send_email(
+            to,
+            f"Welcome to {org_name} — Your Login Credentials",
+            "employee_welcome",
+            {
+                "employee_name": employee_name,
+                "employee_id": employee_id,
+                "email": to,
+                "temp_password": temp_password,
+                "department": department or "—",
+                "role": role.replace("_", " ").title(),
+                "login_url": login_url,
+                "reset_url": reset_url,
+                "org_name": org_name,
+                "app_name": settings.app_name,
+            },
+            user_id=user_id,
+        )
+
     def send_custom_email(
         self,
         to: str,

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to {{ org_name }} — {{ app_name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+
+        <!-- Header -->
+        <tr><td style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:36px 40px;text-align:center;">
+          <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;">{{ app_name }}</h1>
+          <p style="margin:8px 0 0;color:#e0d9ff;font-size:14px;">AI Meeting &amp; Follow-Up Agent</p>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td style="padding:40px;">
+          <h2 style="margin:0 0 6px;color:#111827;font-size:22px;">Welcome aboard, {{ employee_name }}! 🎉</h2>
+          <p style="margin:0 0 24px;color:#6b7280;font-size:14px;">You have been added to <strong>{{ org_name }}</strong>.</p>
+
+          <p style="margin:0 0 20px;color:#374151;line-height:1.7;">
+            Your account has been created. Below are your login credentials. Please log in and change your password immediately.
+          </p>
+
+          <!-- Credentials card -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:28px;">
+            <tr><td style="padding:24px;">
+              <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">Your Credentials</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+                <tr>
+                  <td style="padding:6px 0;color:#6b7280;font-size:13px;width:140px;">Employee ID</td>
+                  <td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">{{ employee_id }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#6b7280;font-size:13px;">Email</td>
+                  <td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">{{ email }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#6b7280;font-size:13px;">Temporary Password</td>
+                  <td style="padding:6px 0;">
+                    <span style="display:inline-block;background:#fef3c7;color:#92400e;font-family:monospace;font-size:14px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:.05em;">{{ temp_password }}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#6b7280;font-size:13px;">Department</td>
+                  <td style="padding:6px 0;color:#111827;font-size:13px;">{{ department }}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;color:#6b7280;font-size:13px;">Role</td>
+                  <td style="padding:6px 0;color:#111827;font-size:13px;">{{ role }}</td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <!-- CTA buttons -->
+          <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+            <tr>
+              <td style="padding-right:12px;">
+                <a href="{{ login_url }}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;">
+                  Login to Dashboard →
+                </a>
+              </td>
+              <td>
+                <a href="{{ reset_url }}" style="display:inline-block;background:#ffffff;color:#7c3aed;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;border:1px solid #7c3aed;">
+                  Reset Password
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:14px 16px;margin-bottom:24px;">
+            <p style="margin:0;color:#dc2626;font-size:13px;">
+              ⚠️ <strong>Security Notice:</strong> This is a temporary password. Please change it immediately after your first login. Do not share it with anyone.
+            </p>
+          </div>
+
+          <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.6;">
+            If you have any questions, contact your manager or the HR team.<br/>
+            — The {{ app_name }} Team
+          </p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;color:#9ca3af;font-size:12px;">© {{ app_name }} · {{ org_name }}. All rights reserved.</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
