@@ -1,7 +1,13 @@
-﻿from dataclasses import dataclass, field
+from dataclasses import dataclass, field
 from functools import lru_cache
 import os
+from pathlib import Path
 from typing import List
+
+from dotenv import load_dotenv
+
+# Load backend/.env before reading settings (works regardless of CWD).
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
 def _parse_csv(value: str | None) -> List[str]:
@@ -46,11 +52,14 @@ class Settings:
     )
     whisper_model_name: str = field(default_factory=lambda: os.getenv("WHISPER_MODEL_NAME", "base"))
     whisper_language: str | None = field(default_factory=lambda: os.getenv("WHISPER_LANGUAGE"))
+    openai_api_key: str | None = field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
+    openai_model: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4.1"))
+    openai_temperature: float = field(default_factory=lambda: float(os.getenv("OPENAI_TEMPERATURE", "0.2")))
     environment: str = field(default_factory=lambda: os.getenv("ENVIRONMENT", "development"))
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     cors_origins: List[str] = field(
         default_factory=lambda: _parse_csv(
-            os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+            os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173")
         )
     )
 

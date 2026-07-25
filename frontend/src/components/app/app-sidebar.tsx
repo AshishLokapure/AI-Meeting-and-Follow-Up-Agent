@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { clearAuthSession } from "@/lib/auth";
 import {
   LayoutDashboard,
   Video,
@@ -100,7 +101,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Log out">
-              <Link to="/login">
+              <Link to="/login" onClick={clearAuthSession}>
                 <LogOut className="h-4 w-4" />
                 <span>Log out</span>
               </Link>

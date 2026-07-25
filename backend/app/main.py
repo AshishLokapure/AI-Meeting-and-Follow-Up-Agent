@@ -1,4 +1,4 @@
-﻿from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import api_router
 from app.core.settings import get_settings
+from app.database import create_all_tables
 import app.models  # noqa: F401
 
 
@@ -16,6 +17,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     app.state.settings = settings
     Path(settings.uploads_root).mkdir(parents=True, exist_ok=True)
+    # Auto-create tables if they don't exist yet (dev convenience)
+    create_all_tables()
     yield
 
 

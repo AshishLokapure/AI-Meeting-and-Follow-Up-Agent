@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { meetings, tasks } from "@/lib/mock-data";
 import { format, isSameDay } from "date-fns";
-import { Video, ListChecks } from "lucide-react";
+import { Video, ListChecks, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_app/calendar")({
   head: () => ({
@@ -29,6 +29,11 @@ function CalendarPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Calendar" description="Meetings and deadlines your agents are tracking" />
+
+      <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>Demo Mode: Shows sample calendar events. Upload real meetings to view active deadlines and upcoming meetings.</span>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="rounded-xl shadow-sm lg:col-span-2">

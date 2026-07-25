@@ -3,7 +3,7 @@
 from app.database.session import SessionLocal
 from app.models import Meeting
 from app.models.enums import MeetingStatus
-from app.services import BackgroundJobService, TranscriptProcessingService, TranscriptionService
+from app.services import AIAnalysisService, BackgroundJobService, TranscriptProcessingService, TranscriptionService
 from app.workers.celery_app import celery_app
 
 logger = get_task_logger(__name__)
@@ -31,12 +31,13 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             meeting,
             transcript_result.transcript_text,
         )
+        analysis_result = AIAnalysisService.analyze_meeting(db, meeting)
 
         result = {
             "job_id": job_id,
             "meeting_id": meeting.id,
-            "status": "transcribed",
-            "message": "Meeting transcribed and cleaned successfully",
+            "status": "analyzed",
+            "message": "Meeting transcribed, cleaned, and analyzed successfully",
             "transcription_model": transcript_result.transcription_model,
             "word_count": transcript_result.word_count,
             "language": transcript_result.language,
@@ -44,6 +45,11 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             "transcript_storage_url": transcript_result.transcript_storage_url,
             "cleaned_paragraphs": cleanup_result.paragraph_count,
             "removed_fillers": cleanup_result.removed_fillers,
+            "analysis_model": analysis_result.model_name,
+            "summary": analysis_result.executive_summary,
+            "decisions": analysis_result.decisions,
+            "action_items": analysis_result.action_items,
+            "risks": analysis_result.risks,
         }
         BackgroundJobService.mark_succeeded(db, job_id, result=result)
         db.commit()

@@ -45,6 +45,11 @@ function AnalyticsPage() {
         description="How your meetings, tasks, and agents are performing"
       />
 
+      <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+        <TrendingUp className="h-4 w-4 text-primary" />
+        <span>Demo Mode: Live analytics will start tracking metrics automatically as meetings are uploaded and action items are processed.</span>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Completion rate" value="86%" icon={CheckCircle2} tone="success" delta={{ value: "+3.2%", positive: true }} />
         <KpiCard label="Avg. completion time" value="2.4d" icon={Timer} tone="primary" delta={{ value: "-0.3d", positive: true }} />

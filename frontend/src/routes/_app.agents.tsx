@@ -32,6 +32,11 @@ function AgentsPage() {
         description="Six specialized agents power your meeting-to-follow-up pipeline"
       />
 
+      <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+        <Icons.Sparkles className="h-4 w-4 text-primary" />
+        <span>Demo Mode: Specialized agents are configured and running in the background. Real-time run counts and success logs will show below.</span>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {agents.map((a) => {
           const Icon = (Icons as unknown as Record<string, Icons.LucideIcon>)[a.icon] ?? Icons.Bot;

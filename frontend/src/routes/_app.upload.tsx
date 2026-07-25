@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useUploadMeeting } from "@/lib/services";
 
 export const Route = createFileRoute("/_app/upload")({
   head: () => ({
@@ -36,27 +37,48 @@ function UploadPage() {
   const [dragging, setDragging] = useState(false);
   const [items, setItems] = useState<UploadItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadMeetingMutation = useUploadMeeting();
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
     Array.from(files).forEach((f) => {
       const id = crypto.randomUUID();
-      const item: UploadItem = { id, name: f.name, size: f.size, progress: 0, done: false };
+      const item: UploadItem = { id, name: f.name, size: f.size, progress: 10, done: false };
       setItems((prev) => [item, ...prev]);
+
+      // Simple upload progress simulation during fetch
       const interval = setInterval(() => {
         setItems((prev) =>
           prev.map((it) => {
             if (it.id !== id) return it;
-            const next = Math.min(100, it.progress + Math.random() * 18);
-            if (next >= 100) {
-              clearInterval(interval);
-              toast.success(`Uploaded ${it.name}`, { description: "Processing has started." });
-              return { ...it, progress: 100, done: true };
-            }
+            if (it.done) return it;
+            const next = Math.min(95, it.progress + Math.random() * 15);
             return { ...it, progress: next };
-          }),
+          })
         );
-      }, 350);
+      }, 200);
+
+      // Call real API
+      uploadMeetingMutation.mutate(
+        { file: f, title: f.name.substring(0, f.name.lastIndexOf('.')) || f.name },
+        {
+          onSuccess: () => {
+            clearInterval(interval);
+            setItems((prev) =>
+              prev.map((it) => {
+                if (it.id !== id) return it;
+                return { ...it, progress: 100, done: true };
+              })
+            );
+            toast.success(`Uploaded ${f.name}`, { description: "Processing has started." });
+          },
+          onError: (err) => {
+            clearInterval(interval);
+            setItems((prev) => prev.filter((x) => x.id !== id));
+            toast.error(`Upload failed: ${err.message}`);
+          }
+        }
+      );
     });
   };
 
@@ -91,14 +113,14 @@ function UploadPage() {
             <div>
               <p className="text-base font-semibold">Drag & drop your recording</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Supports MP3, MP4, WAV, M4A up to 500MB
+                Supports MP3, MP4, WAV, M4A, or TXT transcripts up to 100MB
               </p>
             </div>
             <input
               ref={inputRef}
               type="file"
               multiple
-              accept=".mp3,.mp4,.wav,.m4a,audio/*,video/*"
+              accept=".mp3,.mp4,.wav,.m4a,.txt,.md,audio/*,video/*,text/plain"
               className="hidden"
               onChange={(e) => addFiles(e.target.files)}
             />

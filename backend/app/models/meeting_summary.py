@@ -16,5 +16,6 @@ class MeetingSummary(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     action_items: Mapped[list | None] = mapped_column(JSONB)
     risks: Mapped[list | None] = mapped_column(JSONB)
     model_name: Mapped[str | None] = mapped_column(String(100))
+    analysis_payload: Mapped[dict | None] = mapped_column(JSONB)
 
     meeting = relationship("Meeting", back_populates="summary")

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bell, CheckCircle2, AlertTriangle, UserPlus } from "lucide-react";
+import { Bell, CheckCircle2, AlertTriangle, UserPlus, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +56,11 @@ function NotificationsPage() {
         title="Notifications"
         description="Follow-ups your reminder and escalation agents have sent"
       />
+
+      <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>Demo Mode: Shows sample notification logs. Auto-generated notifications and email/Slack follow-up alerts will be logged as tasks approach their deadlines.</span>
+      </div>
 
       <Card className="rounded-xl shadow-sm">
         <CardHeader><CardTitle>Feed</CardTitle></CardHeader>

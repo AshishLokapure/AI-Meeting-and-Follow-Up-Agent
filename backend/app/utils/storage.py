@@ -195,6 +195,22 @@ def store_upload_file(
 
 
 def store_meeting_audio(upload_file: UploadFile) -> StorageResult:
+    """Accept audio recordings or plain-text transcripts for local/dev workflows."""
+    content_type = (upload_file.content_type or "").lower()
+    filename = (upload_file.filename or "").lower()
+    if content_type in ALLOWED_DOCUMENT_CONTENT_TYPES or filename.endswith((".txt", ".md")):
+        # Normalize empty/odd browser mime for .txt uploads
+        if not upload_file.content_type or upload_file.content_type == "application/octet-stream":
+            upload_file.content_type = "text/plain"
+        result = store_document_upload(upload_file)
+        return StorageResult(
+            url=result.url,
+            storage_key=result.storage_key,
+            filename=result.filename,
+            size_bytes=result.size_bytes,
+            content_type=result.content_type,
+            duration_seconds=60.0,
+        )
     return store_audio_upload(upload_file)
 
 

@@ -1,4 +1,6 @@
-﻿from sqlalchemy import Boolean, DateTime, String
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin

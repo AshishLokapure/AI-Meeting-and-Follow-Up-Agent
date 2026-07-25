@@ -3,21 +3,25 @@ from uuid import uuid4
 import hashlib
 import secrets
 
+import bcrypt
 import jwt
 from jwt import InvalidTokenError
-from passlib.context import CryptContext
 
 from app.core.settings import get_settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # bcrypt enforces a 72-byte max; keep hashing deterministic for normal passwords.
+    secret = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(secret, bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return pwd_context.verify(password, password_hash)
+    secret = password.encode("utf-8")[:72]
+    try:
+        return bcrypt.checkpw(secret, password_hash.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def create_token(payload: dict, expires_delta: timedelta) -> str:

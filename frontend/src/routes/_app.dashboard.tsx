@@ -33,8 +33,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge, PriorityBadge } from "@/components/app/badges";
 import {
-  tasks,
-  meetings,
+  useDashboardStats,
+  useMeetings,
+  useTasks,
+  useUserProfile,
+} from "@/lib/services";
+import { getAuthSession } from "@/lib/auth";
+import {
+  tasks as mockTasks,
+  meetings as mockMeetings,
   meetingTrends,
   completionTrend,
   priorityBreakdown,
@@ -55,13 +62,58 @@ function initials(name: string) {
 }
 
 function DashboardPage() {
-  const upcoming = tasks.filter((t) => t.status !== "completed").slice(0, 5);
-  const recent = tasks.slice(0, 5);
+  const { data: userProfile } = useUserProfile();
+  const { data: stats } = useDashboardStats();
+  const { data: meetingsData } = useMeetings();
+  const { data: tasksData } = useTasks();
+
+  const session = getAuthSession();
+  const userName = userProfile?.name || session?.user?.name || "User";
+
+  // Check if we have any real meetings or tasks
+  const hasRealData = meetingsData && meetingsData.meetings && meetingsData.meetings.length > 0;
+
+  // KPIs
+  const totalMeetings = hasRealData ? (stats?.total_meetings ?? 0) : 128;
+  const completedTasks = hasRealData ? (stats?.completed_tasks ?? 0) : 342;
+  const pendingTasks = hasRealData ? (stats?.pending_tasks ?? 0) : 47;
+  const overdueTasks = hasRealData ? (stats?.overdue_tasks ?? 0) : 9;
+
+  // Lists
+  const recentMeetings = hasRealData
+    ? meetingsData.meetings.slice(0, 4)
+    : mockMeetings.slice(0, 4);
+
+  const recentTasks = hasRealData
+    ? tasksData?.tasks.slice(0, 5) ?? []
+    : mockTasks.slice(0, 5);
+
+  const upcomingTasks = hasRealData
+    ? (tasksData?.tasks.filter((t) => t.status !== "completed").slice(0, 5) ?? [])
+    : mockTasks.filter((t) => t.status !== "completed").slice(0, 5);
 
   return (
     <div className="space-y-6">
+      {!hasRealData && (
+        <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 font-semibold text-primary">
+              <Sparkles className="h-4 w-4" /> Demo Mode Enabled
+            </div>
+            <p className="text-sm text-muted-foreground">
+              You are viewing sample dashboard data. Upload a meeting recording to start analyzing real meetings and tasks!
+            </p>
+          </div>
+          <Button asChild className="w-fit shrink-0">
+            <Link to="/upload">
+              <Upload className="mr-2 h-4 w-4" /> Upload first meeting
+            </Link>
+          </Button>
+        </div>
+      )}
+
       <PageHeader
-        title="Good morning, Alex"
+        title={`Good morning, ${userName}`}
         description="Here's what your meetings and agents are up to today."
         actions={
           <>
@@ -80,10 +132,34 @@ function DashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total meetings" value={128} icon={Video} tone="primary" delta={{ value: "+12%", positive: true }} />
-        <KpiCard label="Completed tasks" value={342} icon={CheckCircle2} tone="success" delta={{ value: "+8%", positive: true }} />
-        <KpiCard label="Pending tasks" value={47} icon={Clock} tone="warning" delta={{ value: "-4%", positive: true }} />
-        <KpiCard label="Overdue tasks" value={9} icon={AlertTriangle} tone="danger" delta={{ value: "+2", positive: false }} />
+        <KpiCard
+          label="Total meetings"
+          value={totalMeetings}
+          icon={Video}
+          tone="primary"
+          delta={!hasRealData ? { value: "+12%", positive: true } : undefined}
+        />
+        <KpiCard
+          label="Completed tasks"
+          value={completedTasks}
+          icon={CheckCircle2}
+          tone="success"
+          delta={!hasRealData ? { value: "+8%", positive: true } : undefined}
+        />
+        <KpiCard
+          label="Pending tasks"
+          value={pendingTasks}
+          icon={Clock}
+          tone="warning"
+          delta={!hasRealData ? { value: "-4%", positive: true } : undefined}
+        />
+        <KpiCard
+          label="Overdue tasks"
+          value={overdueTasks}
+          icon={AlertTriangle}
+          tone="danger"
+          delta={!hasRealData ? { value: "+2", positive: false } : undefined}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -166,30 +242,34 @@ function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {upcoming.map((task) => (
-              <Link
-                key={task.id}
-                to="/tasks/$taskId"
-                params={{ taskId: task.id }}
-                className="flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/40"
-              >
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                    {initials(task.owner.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{task.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {task.owner.name} · Due {task.deadline}
-                  </p>
-                </div>
-                <div className="hidden shrink-0 items-center gap-2 sm:flex">
-                  <PriorityBadge priority={task.priority} />
-                  <StatusBadge status={task.status} />
-                </div>
-              </Link>
-            ))}
+            {upcomingTasks.map((task: any) => {
+              const name = task.owner?.name || userName;
+              const deadline = task.deadline || (task.due_date ? new Date(task.due_date).toLocaleDateString() : "No deadline");
+              return (
+                <Link
+                  key={task.id}
+                  to="/tasks/$taskId"
+                  params={{ taskId: task.id }}
+                  className="flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/40"
+                >
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                      {initials(name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{task.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {name} · Due {deadline}
+                    </p>
+                  </div>
+                  <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                    <PriorityBadge priority={task.priority} />
+                    <StatusBadge status={task.status} />
+                  </div>
+                </Link>
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -226,7 +306,7 @@ function DashboardPage() {
               <p className="mt-1 text-2xl font-bold">97.8%</p>
               <Progress value={97.8} className="mt-2 h-1.5" />
               <p className="mt-1 text-xs text-muted-foreground">
-                Across 128 processed meetings
+                Across {totalMeetings} processed meetings
               </p>
             </div>
           </CardContent>
@@ -266,24 +346,29 @@ function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {meetings.slice(0, 4).map((m) => (
-              <Link
-                key={m.id}
-                to="/meetings/$meetingId"
-                params={{ meetingId: m.id }}
-                className="flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/40"
-              >
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <Video className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{m.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {m.participants.length} participants · {m.duration} min · {m.actionItems} action items
-                  </p>
-                </div>
-              </Link>
-            ))}
+            {recentMeetings.map((m: any) => {
+              const actionItems = m.action_items_count !== undefined ? m.action_items_count : (m.actionItems || 0);
+              const duration = m.duration_minutes !== undefined ? m.duration_minutes : (m.duration || 0);
+              const participantCount = m.participants ? m.participants.length : 0;
+              return (
+                <Link
+                  key={m.id}
+                  to="/meetings/$meetingId"
+                  params={{ meetingId: m.id }}
+                  className="flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <Video className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{m.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {participantCount} participants · {duration} min · {actionItems} action items
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
           </CardContent>
         </Card>
       </div>
@@ -293,21 +378,25 @@ function DashboardPage() {
           <CardTitle>Recent tasks</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {recent.map((t) => (
-            <div
-              key={t.id}
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 p-3"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{t.title}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {t.meetingTitle} · {t.owner.name}
-                </p>
+          {recentTasks.map((t: any) => {
+            const name = t.owner?.name || userName;
+            const meetingTitle = t.meetingTitle || "General Meeting";
+            return (
+              <div
+                key={t.id}
+                className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{t.title}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {meetingTitle} · {name}
+                  </p>
+                </div>
+                <PriorityBadge priority={t.priority} />
+                <StatusBadge status={t.status} />
               </div>
-              <PriorityBadge priority={t.priority} />
-              <StatusBadge status={t.status} />
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
     </div>
