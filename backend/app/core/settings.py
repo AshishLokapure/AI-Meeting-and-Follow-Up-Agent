@@ -62,6 +62,19 @@ class Settings:
             os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173")
         )
     )
+    # ── SMTP / Mail ──────────────────────────────────────────────────────────
+    mail_host: str = field(default_factory=lambda: os.getenv("MAIL_HOST", "smtp-relay.brevo.com"))
+    mail_port: int = field(default_factory=lambda: int(os.getenv("MAIL_PORT", "587")))
+    mail_username: str = field(default_factory=lambda: os.getenv("MAIL_USERNAME", ""))
+    mail_password: str = field(default_factory=lambda: os.getenv("MAIL_PASSWORD", ""))
+    mail_from: str = field(default_factory=lambda: os.getenv("MAIL_FROM", ""))
+    mail_from_name: str = field(default_factory=lambda: os.getenv("MAIL_FROM_NAME", "AI Meeting Agent"))
+    # ── Email task settings ───────────────────────────────────────────────────
+    email_max_retries: int = field(default_factory=lambda: int(os.getenv("EMAIL_MAX_RETRIES", "3")))
+    email_retry_backoff: int = field(default_factory=lambda: int(os.getenv("EMAIL_RETRY_BACKOFF", "60")))
+    reminder_interval_hours: int = field(default_factory=lambda: int(os.getenv("REMINDER_INTERVAL_HOURS", "24")))
+    # ── Frontend base URL (used in email links) ───────────────────────────────
+    frontend_url: str = field(default_factory=lambda: os.getenv("FRONTEND_URL", "http://localhost:3000"))
 
 
 @lru_cache(maxsize=1)

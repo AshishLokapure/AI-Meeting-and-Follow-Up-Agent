@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.settings import get_settings
 from app.models import AILog, Meeting, MeetingSummary, MeetingTranscript, Task
+from app.models.employee import Employee
 from app.models.enums import MeetingStatus, TaskPriority, TaskStatus
 
 
@@ -210,6 +211,16 @@ class AIAnalysisService:
         # Persist action items as Task rows so the tasks API / dashboard reflect real data.
         existing_tasks = db.scalars(select(Task).where(Task.meeting_id == meeting.id)).all()
         if not existing_tasks:
+            # Load all employees added by this meeting's owner for name-matching
+            employees = db.scalars(
+                select(Employee).where(
+                    Employee.added_by_id == meeting.owner_id,
+                    Employee.is_active.is_(True),
+                )
+            ).all()
+            # Build lowercase name -> employee lookup
+            emp_by_name = {e.name.lower(): e for e in employees}
+
             allowed_priorities = {item.value for item in TaskPriority}
             for item in analysis_result.action_items:
                 raw_title = str(item.get("task") or item.get("title") or "").strip()
@@ -220,18 +231,55 @@ class AIAnalysisService:
                     raw_priority = TaskPriority.critical.value
                 if raw_priority not in allowed_priorities:
                     raw_priority = TaskPriority.medium.value
-                db.add(
-                    Task(
-                        meeting_id=meeting.id,
-                        assignee_id=meeting.owner_id,
-                        title=raw_title[:255],
-                        description=str(item.get("details") or item.get("description") or "").strip() or None,
-                        priority=raw_priority,
-                        status=TaskStatus.pending.value,
-                        source_excerpt=raw_title,
-                        extracted_metadata=item if isinstance(item, dict) else {"raw": item},
-                    )
+
+                # Match owner name from AI output to an employee
+                raw_owner = str(item.get("owner") or "").strip().lower()
+                matched_employee: Employee | None = None
+                if raw_owner:
+                    # exact match first
+                    matched_employee = emp_by_name.get(raw_owner)
+                    if not matched_employee:
+                        # partial match — find first employee whose name contains the owner token
+                        for emp_name, emp in emp_by_name.items():
+                            if raw_owner in emp_name or emp_name in raw_owner:
+                                matched_employee = emp
+                                break
+                if not matched_employee and employees:
+                    # round-robin fallback: assign to employees in order
+                    idx = analysis_result.action_items.index(item) % len(employees)
+                    matched_employee = employees[idx]
+
+                task = Task(
+                    meeting_id=meeting.id,
+                    assignee_id=meeting.owner_id,
+                    assigned_by_id=meeting.owner_id,
+                    title=raw_title[:255],
+                    description=str(item.get("details") or item.get("description") or "").strip() or None,
+                    priority=raw_priority,
+                    status=TaskStatus.pending.value,
+                    source_excerpt=raw_title,
+                    extracted_metadata={
+                        **(item if isinstance(item, dict) else {"raw": item}),
+                        "matched_employee_id": matched_employee.id if matched_employee else None,
+                        "matched_employee_email": matched_employee.email if matched_employee else None,
+                        "matched_employee_name": matched_employee.name if matched_employee else None,
+                    },
+                    reminder_enabled=True,
                 )
+                db.add(task)
+
+                # Send task assignment email to the matched employee immediately
+                if matched_employee:
+                    from app.services.email_service import EmailService
+                    EmailService().send_task_assignment(
+                        to=matched_employee.email,
+                        assignee_name=matched_employee.name,
+                        assigner_name="AI Meeting Agent",
+                        task_title=raw_title,
+                        task_description=task.description or "",
+                        deadline=None,
+                        priority=raw_priority,
+                    )
 
         ai_log = AILog(
             meeting_id=meeting.id,

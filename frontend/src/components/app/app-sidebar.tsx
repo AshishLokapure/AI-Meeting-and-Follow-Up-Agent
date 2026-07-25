@@ -13,6 +13,7 @@ import {
   LogOut,
   Sparkles,
   User as UserIcon,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ const primaryNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Meetings", url: "/meetings", icon: Video },
   { title: "Upload Meeting", url: "/upload", icon: Upload },
+  { title: "Employees", url: "/employees", icon: Users },
   { title: "Tasks", url: "/tasks", icon: ListChecks },
   { title: "Calendar", url: "/calendar", icon: CalendarIcon },
   { title: "Notifications", url: "/notifications", icon: Bell },

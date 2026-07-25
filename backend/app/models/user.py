@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -18,11 +18,27 @@ class User(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     avatar_url: Mapped[str | None] = mapped_column(String(500))
+    # Enterprise fields
+    employee_id: Mapped[str | None] = mapped_column(String(50), unique=True, index=True)
+    department: Mapped[str | None] = mapped_column(String(100))
+    designation: Mapped[str | None] = mapped_column(String(100))
+    manager_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
 
+    manager = relationship("User", remote_side="User.id", foreign_keys=[manager_id])
     meetings = relationship("Meeting", back_populates="owner", cascade="all, delete-orphan")
-    tasks = relationship("Task", back_populates="assignee")
+    tasks = relationship("Task", foreign_keys="Task.assignee_id", back_populates="assignee")
     notifications = relationship("Notification", back_populates="recipient")
     task_activities = relationship("TaskActivity", back_populates="actor")
+    escalation_logs_as_employee = relationship(
+        "EscalationLog",
+        foreign_keys="EscalationLog.employee_id",
+        back_populates="employee",
+    )
+    escalation_logs_as_manager = relationship(
+        "EscalationLog",
+        foreign_keys="EscalationLog.manager_id",
+        back_populates="manager",
+    )
     ai_logs = relationship("AILog", back_populates="user")
     system_logs = relationship("SystemLog", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")

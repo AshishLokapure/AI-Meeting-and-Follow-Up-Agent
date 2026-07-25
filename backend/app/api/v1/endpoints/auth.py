@@ -18,6 +18,12 @@ from app.schemas import (
     VerifyEmailRequest,
 )
 from app.services import AuthService
+from app.workers.email_tasks import (
+    send_password_changed_email,
+    send_password_reset_email,
+    send_verification_email,
+    send_welcome_email,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,6 +43,7 @@ def _build_auth_response(user, access_token: str | None, refresh_token: str | No
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> AuthResponse:
+    settings = get_settings()
     user, verification_token = AuthService.register(
         db=db,
         name=payload.name,
@@ -45,6 +52,13 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> AuthRes
     )
     db.commit()
     db.refresh(user)
+
+    # Queue welcome + verification emails asynchronously
+    send_welcome_email.delay(user.email, user.name, user.id)
+    if verification_token:
+        verification_url = f"{settings.frontend_url}/verify-email?token={verification_token}"
+        send_verification_email.delay(user.email, user.name, verification_url, user.id)
+
     return _build_auth_response(user, None, None, verification_token)
 
 
@@ -73,19 +87,30 @@ def logout(payload: LogoutRequest, db: Session = Depends(get_db)) -> SimpleMessa
 
 @router.post("/forgot-password", response_model=SimpleMessageResponse)
 def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)) -> SimpleMessageResponse:
+    settings = get_settings()
     token = AuthService.forgot_password(db=db, email=payload.email)
     db.commit()
-    settings = get_settings()
+
+    if token:
+        from sqlalchemy import select
+        from app.models import User
+        user = db.scalar(select(User).where(User.email == payload.email.strip().lower()))
+        if user:
+            reset_url = f"{settings.frontend_url}/reset-password?token={token}"
+            send_password_reset_email.delay(user.email, user.name, reset_url, user.id)
+
     return SimpleMessageResponse(
-        message="If the account exists, a password reset link has been prepared.",
+        message="If the account exists, a password reset link has been sent.",
         token=token if settings.environment != "production" else None,
     )
 
 
 @router.post("/reset-password", response_model=SimpleMessageResponse)
 def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)) -> SimpleMessageResponse:
-    AuthService.reset_password(db=db, token=payload.token, new_password=payload.new_password)
+    user = AuthService.reset_password(db=db, token=payload.token, new_password=payload.new_password)
     db.commit()
+    # Notify user that password was changed
+    send_password_changed_email.delay(user.email, user.name, user.id)
     return SimpleMessageResponse(message="Password updated successfully")
 
 
