@@ -53,7 +53,7 @@ class EmployeeService:
     def create(self, payload: EmployeeCreate, added_by_id: str) -> tuple[Employee, str]:
         """Create employee. Returns (employee, plain_temp_password)."""
         emp_id = _generate_employee_id(self.db)
-        plain_pw = payload.password
+        plain_pw = payload.password or _generate_temp_password()
         emp = Employee(
             added_by_id=added_by_id,
             employee_id=emp_id,

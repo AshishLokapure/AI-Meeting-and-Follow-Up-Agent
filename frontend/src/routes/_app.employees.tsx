@@ -38,11 +38,14 @@ export const Route = createFileRoute("/_app/employees")({
 interface Employee {
   id: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
   email: string;
   phone: string | null;
   department: string | null;
   designation: string | null;
   is_active: boolean;
+  status?: string;
   created_at: string;
 }
 
@@ -56,10 +59,36 @@ interface EmployeeForm {
 
 const EMPTY_FORM: EmployeeForm = { name: "", email: "", phone: "", department: "", designation: "" };
 
+function splitEmployeeName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return null;
+  return {
+    first_name: parts[0],
+    last_name: parts.slice(1).join(" "),
+  };
+}
+
 function useEmployees() {
   return useQuery<Employee[]>({
     queryKey: ["employees"],
-    queryFn: () => apiRequest("/employees"),
+    queryFn: async () => {
+      const payload = await apiRequest<
+        Employee[] | { employees?: Employee[] }
+      >("/employees");
+
+      const employees = Array.isArray(payload) ? payload : payload?.employees;
+      if (!Array.isArray(employees)) return [];
+
+      return employees.map((employee) => ({
+        ...employee,
+        name:
+          employee.name ||
+          [employee.first_name, employee.last_name].filter(Boolean).join(" "),
+        is_active: employee.status
+          ? employee.status === "active"
+          : employee.is_active,
+      }));
+    },
   });
 }
 
@@ -83,14 +112,15 @@ function EmployeeFormDialog({
 
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault();
-    if (!form.name.trim() || !form.email.trim()) {
-      toast.error("Name and email are required");
+    const name = splitEmployeeName(form.name);
+    if (!name || !form.email.trim()) {
+      toast.error("Enter a first and last name, plus an email address");
       return;
     }
     setLoading(true);
     try {
       const body = {
-        name: form.name.trim(),
+        ...name,
         email: form.email.trim(),
         phone: form.phone.trim() || null,
         department: form.department.trim() || null,

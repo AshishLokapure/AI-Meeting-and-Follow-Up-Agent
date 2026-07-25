@@ -44,7 +44,7 @@ class EmployeeCreate(BaseModel):
     status: str = Field(default="active")
     joining_date: Optional[date] = None
     manager_id: Optional[str] = None
-    password: str = Field(min_length=6, max_length=128)
+    password: Optional[str] = Field(default=None, min_length=6, max_length=128)
 
     @field_validator("role")
     @classmethod

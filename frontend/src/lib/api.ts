@@ -1,7 +1,12 @@
-import { getAccessToken } from "./auth";
+import { clearAuthSession, getAccessToken, getAuthSession, getRefreshToken, saveAuthSession, type AuthSession } from "./auth";
 
 const DEFAULT_API_BASE_URL = "/api/v1";
 const REQUEST_TIMEOUT_MS = 10_000; // 10 seconds
+
+type RefreshResponse = {
+  user: AuthSession["user"];
+  tokens: AuthSession["tokens"];
+};
 
 export function getApiBaseUrl() {
   return (import.meta.env.VITE_API_URL as string | undefined) ?? DEFAULT_API_BASE_URL;
@@ -36,10 +41,36 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetchWithTimeout(`${getApiBaseUrl()}${path}`, {
+  let response = await fetchWithTimeout(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers,
   });
+
+  if (response.status === 401 && !path.startsWith("/auth/")) {
+    const refreshToken = getRefreshToken();
+    if (refreshToken) {
+      const refreshResponse = await fetchWithTimeout(`${getApiBaseUrl()}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (refreshResponse.ok) {
+        const refreshed = (await refreshResponse.json()) as RefreshResponse;
+        const session = getAuthSession();
+        if (session) {
+          saveAuthSession({ user: refreshed.user, tokens: refreshed.tokens });
+          headers.set("Authorization", `Bearer ${refreshed.tokens.access_token}`);
+          response = await fetchWithTimeout(`${getApiBaseUrl()}${path}`, {
+            ...init,
+            headers,
+          });
+        }
+      } else {
+        clearAuthSession();
+      }
+    }
+  }
 
   const contentType = response.headers.get("content-type") ?? "";
   const payload = contentType.includes("application/json") ? await response.json() : null;

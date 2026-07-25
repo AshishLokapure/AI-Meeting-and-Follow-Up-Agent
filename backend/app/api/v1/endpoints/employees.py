@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import math
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import status as http_status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -53,7 +54,7 @@ def list_employees(
     q: str | None = Query(default=None, max_length=200),
     department: str | None = Query(default=None),
     role: str | None = Query(default=None),
-    status_filter: str | None = Query(default=None, alias="status"),
+    emp_status: str | None = Query(default=None, alias="status"),
     sort_by: str = Query(default="created_at"),
     sort_dir: str = Query(default="desc", pattern="^(asc|desc)$"),
     page: int = Query(default=1, ge=1),
@@ -65,7 +66,7 @@ def list_employees(
         q=q,
         department=department,
         role=role,
-        status=status_filter,
+        status=emp_status,
         sort_by=sort_by,
         sort_dir=sort_dir,
         page=page,
@@ -82,24 +83,21 @@ def list_employees(
 
 # ── Create ─────────────────────────────────────────────────────────────────────
 
-@router.post("", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=EmployeeOut, status_code=http_status.HTTP_201_CREATED)
 def create_employee(
     payload: EmployeeCreate,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_verified_user),
 ) -> EmployeeOut:
-    # Unique email check
     if db.scalar(select(Employee).where(Employee.email == payload.email.lower())):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail="Email already registered")
 
-    # Unique phone check
     if payload.phone and db.scalar(select(Employee).where(Employee.phone == payload.phone)):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Phone number already registered")
+        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail="Phone number already registered")
 
     svc = EmployeeService(db)
     emp, plain_pw = svc.create(payload, current_user.id)
 
-    # Send welcome email with credentials (non-blocking — fire and forget)
     try:
         settings = get_settings()
         from app.services.email_service import EmailService
@@ -115,7 +113,7 @@ def create_employee(
             org_name=current_user.name,
         )
     except Exception:
-        pass  # Email failure must not block employee creation
+        pass
 
     return _out(emp)
 
@@ -131,7 +129,7 @@ def get_employee_profile(
     svc = EmployeeService(db)
     profile = svc.get_profile(employee_id, current_user.id)
     if not profile:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Employee not found")
     return profile
 
 
@@ -144,13 +142,12 @@ def get_employee(
     svc = EmployeeService(db)
     emp = svc.get_by_id(employee_id, current_user.id)
     if not emp:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Employee not found")
     return _out(emp)
 
 
 # ── Update ─────────────────────────────────────────────────────────────────────
 
-@router.put("/{employee_id}", response_model=EmployeeOut)
 @router.patch("/{employee_id}", response_model=EmployeeOut)
 def update_employee(
     employee_id: str,
@@ -161,21 +158,22 @@ def update_employee(
     svc = EmployeeService(db)
     emp = svc.get_by_id(employee_id, current_user.id)
     if not emp:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Employee not found")
     emp = svc.update(emp, payload)
     return _out(emp)
 
 
 # ── Delete ─────────────────────────────────────────────────────────────────────
 
-@router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{employee_id}")
 def delete_employee(
     employee_id: str,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_verified_user),
-) -> None:
+) -> Response:
     svc = EmployeeService(db)
     emp = svc.get_by_id(employee_id, current_user.id)
     if not emp:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Employee not found")
     svc.delete(emp)
+    return Response(status_code=http_status.HTTP_204_NO_CONTENT)
