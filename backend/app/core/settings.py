@@ -20,6 +20,21 @@ class Settings:
             "postgresql://postgres:Ashish19@localhost:5432/AI_Meeting_Flow",
         )
     )
+    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "change-me-in-production"))
+    jwt_algorithm: str = field(default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256"))
+    access_token_expire_minutes: int = field(
+        default_factory=lambda: int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    )
+    refresh_token_expire_days: int = field(
+        default_factory=lambda: int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    )
+    email_token_expire_minutes: int = field(
+        default_factory=lambda: int(os.getenv("EMAIL_TOKEN_EXPIRE_MINUTES", "60"))
+    )
+    password_reset_token_expire_minutes: int = field(
+        default_factory=lambda: int(os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", "30"))
+    )
+    uploads_root: str = field(default_factory=lambda: os.getenv("UPLOADS_ROOT", "uploads"))
     environment: str = field(default_factory=lambda: os.getenv("ENVIRONMENT", "development"))
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     cors_origins: List[str] = field(

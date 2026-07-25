@@ -1,9 +1,10 @@
-﻿from sqlalchemy.dialects.postgresql import JSONB
+﻿from datetime import datetime
+
 from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
-from app.models.enums import LogLevel
 
 
 class SystemLog(Base, TimestampMixin, UUIDPrimaryKeyMixin):
@@ -12,7 +13,7 @@ class SystemLog(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     user_id: Mapped[str | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
-    level: Mapped[str] = mapped_column(String(20), default=LogLevel.info.value, nullable=False)
+    level: Mapped[str] = mapped_column(String(20), nullable=False, default="info")
     service: Mapped[str] = mapped_column(String(100), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     correlation_id: Mapped[str | None] = mapped_column(String(100), index=True)

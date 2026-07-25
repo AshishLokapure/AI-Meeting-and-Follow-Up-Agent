@@ -1,4 +1,6 @@
-﻿from sqlalchemy import ForeignKey, String, Text
+﻿from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

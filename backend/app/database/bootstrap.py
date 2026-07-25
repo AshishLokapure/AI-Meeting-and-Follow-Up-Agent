@@ -1,6 +1,21 @@
-﻿from app.database.base import Base
+﻿from app.models import (  # noqa: F401
+    AILog,
+    EmailVerificationToken,
+    Meeting,
+    MeetingParticipant,
+    MeetingSummary,
+    MeetingTranscript,
+    Notification,
+    PasswordResetToken,
+    RefreshToken,
+    ReminderLog,
+    SystemLog,
+    Task,
+    TaskActivity,
+    User,
+)
 
-import app.models  # noqa: F401
+from app.database.base import Base
 from app.database.session import engine
 
 
