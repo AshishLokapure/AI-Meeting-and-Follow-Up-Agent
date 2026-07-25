@@ -44,6 +44,8 @@ class Settings:
     max_meeting_duration_minutes: int = field(
         default_factory=lambda: int(os.getenv("MAX_MEETING_DURATION_MINUTES", "480"))
     )
+    whisper_model_name: str = field(default_factory=lambda: os.getenv("WHISPER_MODEL_NAME", "base"))
+    whisper_language: str | None = field(default_factory=lambda: os.getenv("WHISPER_LANGUAGE"))
     environment: str = field(default_factory=lambda: os.getenv("ENVIRONMENT", "development"))
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     cors_origins: List[str] = field(

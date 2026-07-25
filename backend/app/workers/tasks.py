@@ -3,7 +3,7 @@
 from app.database.session import SessionLocal
 from app.models import Meeting
 from app.models.enums import MeetingStatus
-from app.services import BackgroundJobService
+from app.services import BackgroundJobService, TranscriptProcessingService, TranscriptionService
 from app.workers.celery_app import celery_app
 
 logger = get_task_logger(__name__)
@@ -19,14 +19,31 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             return {"job_id": job_id, "status": "missing"}
 
         meeting = db.get(Meeting, job.meeting_id) if job.meeting_id else None
-        if meeting is not None:
-            meeting.status = MeetingStatus.processing.value
+        if meeting is None:
+            BackgroundJobService.mark_failed(db, job_id, "Meeting not found")
+            db.commit()
+            return {"job_id": job_id, "status": "failed", "message": "Meeting not found"}
+
+        meeting.status = MeetingStatus.processing.value
+        transcript_result = TranscriptionService.transcribe_meeting(db, meeting)
+        cleanup_result = TranscriptProcessingService.clean_meeting_transcript(
+            db,
+            meeting,
+            transcript_result.transcript_text,
+        )
 
         result = {
             "job_id": job_id,
-            "meeting_id": job.meeting_id,
-            "status": "processing",
-            "message": "Meeting queued for AI processing",
+            "meeting_id": meeting.id,
+            "status": "transcribed",
+            "message": "Meeting transcribed and cleaned successfully",
+            "transcription_model": transcript_result.transcription_model,
+            "word_count": transcript_result.word_count,
+            "language": transcript_result.language,
+            "confidence_score": transcript_result.confidence_score,
+            "transcript_storage_url": transcript_result.transcript_storage_url,
+            "cleaned_paragraphs": cleanup_result.paragraph_count,
+            "removed_fillers": cleanup_result.removed_fillers,
         }
         BackgroundJobService.mark_succeeded(db, job_id, result=result)
         db.commit()

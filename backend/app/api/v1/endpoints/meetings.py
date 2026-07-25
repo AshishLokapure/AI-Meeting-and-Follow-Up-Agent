@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_verified_user
 from app.database import get_db
-from app.schemas import MeetingPublic, MeetingUploadResponse
-from app.services import BackgroundJobService, MeetingService
+from app.models import Meeting
+from app.schemas import MeetingPublic, MeetingUploadResponse, TranscriptPublic, TranscriptResponse
+from app.services import BackgroundJobService, MeetingService, TranscriptService
 from app.workers.tasks import process_meeting_pipeline
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
@@ -35,4 +36,25 @@ def upload_meeting(
         storage_backend=storage_backend,
         job_id=job.id,
         job_status=job.status,
+    )
+
+
+@router.get("/{meeting_id}/transcript", response_model=TranscriptResponse)
+def get_transcript(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_verified_user),
+) -> TranscriptResponse:
+    meeting = db.get(Meeting, meeting_id)
+    if meeting is None or meeting.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
+
+    transcript = TranscriptService.get_meeting_transcript(db, meeting_id)
+    if transcript is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transcript not available")
+
+    return TranscriptResponse(
+        message="Transcript fetched successfully",
+        transcript=TranscriptPublic.model_validate(transcript),
+        meeting_status=meeting.status,
     )

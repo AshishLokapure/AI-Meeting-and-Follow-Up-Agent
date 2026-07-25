@@ -12,6 +12,7 @@
     VerifyEmailRequest,
 )
 from app.schemas.meeting import MeetingPublic, MeetingUploadResponse
+from app.schemas.transcript import TranscriptPublic, TranscriptResponse
 from app.schemas.user import ChangePasswordRequest, UpdateProfileRequest, UserActionResponse, UserListResponse
 
 __all__ = [
@@ -27,6 +28,8 @@ __all__ = [
     "ResetPasswordRequest",
     "SimpleMessageResponse",
     "TokenPair",
+    "TranscriptPublic",
+    "TranscriptResponse",
     "UpdateProfileRequest",
     "UserActionResponse",
     "UserListResponse",

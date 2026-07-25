@@ -1,6 +1,4 @@
-﻿from datetime import datetime, timezone
-
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text
+﻿from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -17,5 +15,10 @@ class MeetingTranscript(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     language: Mapped[str | None] = mapped_column(String(20))
     confidence_score: Mapped[float | None] = mapped_column(Float)
     source_uri: Mapped[str | None] = mapped_column(Text)
+    word_count: Mapped[int | None] = mapped_column(Integer)
+    transcription_model: Mapped[str | None] = mapped_column(String(100))
+    duration_seconds: Mapped[float | None] = mapped_column(Float)
+    transcript_format: Mapped[str | None] = mapped_column(String(50), default="text/plain", nullable=False)
+    transcript_storage_url: Mapped[str | None] = mapped_column(Text)
 
     meeting = relationship("Meeting", back_populates="transcript")

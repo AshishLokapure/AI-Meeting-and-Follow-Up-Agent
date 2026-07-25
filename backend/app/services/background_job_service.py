@@ -11,6 +11,23 @@ class BackgroundJobService:
         return datetime.now(timezone.utc)
 
     @classmethod
+    def create_meeting_pipeline_job(cls, db: Session, meeting) -> BackgroundJob:
+        job = BackgroundJob(
+            meeting_id=meeting.id,
+            job_type="meeting_pipeline",
+            status="queued",
+            payload={
+                "meeting_id": meeting.id,
+                "owner_id": meeting.owner_id,
+            },
+            queued_at=cls._utcnow(),
+            attempts=0,
+        )
+        db.add(job)
+        db.flush()
+        return job
+
+    @classmethod
     def mark_dispatched(cls, db: Session, job: BackgroundJob, celery_task_id: str) -> BackgroundJob:
         job.celery_task_id = celery_task_id
         return job
