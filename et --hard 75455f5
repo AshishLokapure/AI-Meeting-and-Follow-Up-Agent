@@ -1,0 +1,11 @@
+[33mdf1a228[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m75455f5[m HEAD@{1}: commit: frontend bug fix
+[33mdf1a228[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{2}: commit: Transcript Processing
+[33mbbe1650[m HEAD@{3}: commit: Background processing
+[33m09cf1e2[m HEAD@{4}: commit: File storage
+[33m556073c[m HEAD@{5}: commit: Meeting Upload Module
+[33m56f4363[m HEAD@{6}: commit: User management and authentication
+[33m5377842[m HEAD@{7}: commit: Created database design
+[33me4c563d[m HEAD@{8}: commit: Frontend
+[33mc046ba2[m HEAD@{9}: commit: Added readme.md file
+[33mcedbdb5[m HEAD@{10}: commit (initial): initial commit

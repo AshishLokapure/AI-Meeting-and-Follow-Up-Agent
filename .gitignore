@@ -1,7 +1,60 @@
+# Dependencies
 node_modules/
+frontend/node_modules/
+backend/.venv/
+venv/
+.venv/
+*.egg-info/
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Environment and secrets
 .env
-.env.local
+.env.*
+!.env.example
+*.env
+*.local
+*.pem
+*.key
+*.crt
+
+# Logs and runtime data
+*.log
+logs/
+backend/logs/
+backend/uploads/
+backend/temp/
+backend/tests/.pytest_cache/
+
+# Databases and local storage
+*.sqlite3
+*.db
+*.dump
+
+# Frontend build output
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.turbo/
+frontend/coverage/
+
+# IDE / editor files
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
 .DS_Store
+Thumbs.db
