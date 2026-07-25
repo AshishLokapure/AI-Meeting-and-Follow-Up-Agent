@@ -1,6 +1,6 @@
 ﻿from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,8 +19,12 @@ class Meeting(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     meeting_date: Mapped[date | None] = mapped_column(Date)
     start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     duration_minutes: Mapped[int | None] = mapped_column(Integer)
+    duration_seconds: Mapped[float | None] = mapped_column(Float)
     status: Mapped[str] = mapped_column(String(50), default=MeetingStatus.uploaded.value, nullable=False)
     recording_url: Mapped[str | None] = mapped_column(Text)
+    recording_filename: Mapped[str | None] = mapped_column(String(255))
+    recording_mime_type: Mapped[str | None] = mapped_column(String(100))
+    recording_size_bytes: Mapped[int | None] = mapped_column(Integer)
     source_metadata: Mapped[dict | None] = mapped_column(JSONB)
 
     owner = relationship("User", back_populates="meetings")

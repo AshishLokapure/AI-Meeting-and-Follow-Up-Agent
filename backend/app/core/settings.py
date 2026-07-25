@@ -35,6 +35,14 @@ class Settings:
         default_factory=lambda: int(os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", "30"))
     )
     uploads_root: str = field(default_factory=lambda: os.getenv("UPLOADS_ROOT", "uploads"))
+    storage_backend: str = field(default_factory=lambda: os.getenv("STORAGE_BACKEND", "local"))
+    aws_bucket_name: str | None = field(default_factory=lambda: os.getenv("AWS_BUCKET_NAME"))
+    aws_region: str = field(default_factory=lambda: os.getenv("AWS_REGION", "us-east-1"))
+    aws_s3_prefix: str = field(default_factory=lambda: os.getenv("AWS_S3_PREFIX", "meetings"))
+    max_upload_size_mb: int = field(default_factory=lambda: int(os.getenv("MAX_UPLOAD_SIZE_MB", "100")))
+    max_meeting_duration_minutes: int = field(
+        default_factory=lambda: int(os.getenv("MAX_MEETING_DURATION_MINUTES", "480"))
+    )
     environment: str = field(default_factory=lambda: os.getenv("ENVIRONMENT", "development"))
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     cors_origins: List[str] = field(
