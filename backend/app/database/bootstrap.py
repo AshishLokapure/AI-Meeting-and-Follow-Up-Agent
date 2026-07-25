@@ -1,5 +1,7 @@
 ﻿from app.models import (  # noqa: F401
     AILog,
+    BackgroundJob,
+    BackgroundJobStatus,
     EmailVerificationToken,
     Meeting,
     MeetingParticipant,

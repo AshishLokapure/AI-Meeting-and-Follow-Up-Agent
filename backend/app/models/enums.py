@@ -3,6 +3,7 @@
 
 class MeetingStatus(str, Enum):
     uploaded = "uploaded"
+    queued = "queued"
     processing = "processing"
     transcribed = "transcribed"
     summarized = "summarized"
@@ -53,3 +54,10 @@ class LogLevel(str, Enum):
     warning = "warning"
     error = "error"
     critical = "critical"
+
+
+class BackgroundJobStatus(str, Enum):
+    queued = "queued"
+    started = "started"
+    succeeded = "succeeded"
+    failed = "failed"

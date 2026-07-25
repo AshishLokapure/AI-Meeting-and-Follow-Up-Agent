@@ -33,3 +33,4 @@ class Meeting(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     summary = relationship("MeetingSummary", back_populates="meeting", uselist=False, cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="meeting", cascade="all, delete-orphan")
     ai_logs = relationship("AILog", back_populates="meeting")
+    background_jobs = relationship("BackgroundJob", back_populates="meeting", cascade="all, delete-orphan")

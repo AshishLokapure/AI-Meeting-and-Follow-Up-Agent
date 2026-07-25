@@ -1,7 +1,8 @@
 ﻿from app.models.ai_log import AILog
+from app.models.background_job import BackgroundJob
 from app.models.base import ModelBase
 from app.models.email_verification_token import EmailVerificationToken
-from app.models.enums import LogLevel, MeetingStatus, NotificationChannel, NotificationStatus, ReminderStatus, TaskPriority, TaskStatus
+from app.models.enums import BackgroundJobStatus, LogLevel, MeetingStatus, NotificationChannel, NotificationStatus, ReminderStatus, TaskPriority, TaskStatus
 from app.models.meeting import Meeting
 from app.models.meeting_participant import MeetingParticipant
 from app.models.meeting_summary import MeetingSummary
@@ -17,6 +18,8 @@ from app.models.user import User
 
 __all__ = [
     "AILog",
+    "BackgroundJob",
+    "BackgroundJobStatus",
     "EmailVerificationToken",
     "LogLevel",
     "Meeting",

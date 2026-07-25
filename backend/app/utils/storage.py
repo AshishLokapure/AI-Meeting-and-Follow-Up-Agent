@@ -140,7 +140,8 @@ def store_audio_upload(upload_file: UploadFile) -> StorageResult:
     final_filename = f"{upload_id}{suffix}"
     if settings.storage_backend.lower() == "s3":
         url = _persist_to_s3(StorageCategory.audio, temp_path, final_filename, upload_file.content_type)
-        storage_key = f"{settings.aws_s3_prefix.strip('/')}/{StorageCategory.audio.value}/{final_filename}" if settings.aws_s3_prefix.strip('/') else f"{StorageCategory.audio.value}/{final_filename}"
+        key_prefix = settings.aws_s3_prefix.strip("/")
+        storage_key = f"{key_prefix}/{StorageCategory.audio.value}/{final_filename}" if key_prefix else f"{StorageCategory.audio.value}/{final_filename}"
     else:
         url = _persist_to_local(StorageCategory.audio, temp_path, final_filename)
         storage_key = f"{StorageCategory.audio.value}/{final_filename}"
@@ -178,7 +179,8 @@ def store_upload_file(
     final_filename = f"{upload_id}{suffix}"
     if settings.storage_backend.lower() == "s3":
         url = _persist_to_s3(category, temp_path, final_filename, upload_file.content_type)
-        storage_key = f"{settings.aws_s3_prefix.strip('/')}/{category.value}/{final_filename}" if settings.aws_s3_prefix.strip('/') else f"{category.value}/{final_filename}"
+        key_prefix = settings.aws_s3_prefix.strip("/")
+        storage_key = f"{key_prefix}/{category.value}/{final_filename}" if key_prefix else f"{category.value}/{final_filename}"
     else:
         url = _persist_to_local(category, temp_path, final_filename)
         storage_key = f"{category.value}/{final_filename}"
@@ -207,7 +209,8 @@ def store_transcript_text(meeting_id: str, transcript_text: str) -> StorageResul
     final_filename = f"{meeting_id}.txt"
     if settings.storage_backend.lower() == "s3":
         url = _persist_to_s3(StorageCategory.transcripts, temp_path, final_filename, "text/plain")
-        storage_key = f"{settings.aws_s3_prefix.strip('/')}/{StorageCategory.transcripts.value}/{final_filename}" if settings.aws_s3_prefix.strip('/') else f"{StorageCategory.transcripts.value}/{final_filename}"
+        key_prefix = settings.aws_s3_prefix.strip("/")
+        storage_key = f"{key_prefix}/{StorageCategory.transcripts.value}/{final_filename}" if key_prefix else f"{StorageCategory.transcripts.value}/{final_filename}"
     else:
         url = _persist_to_local(StorageCategory.transcripts, temp_path, final_filename)
         storage_key = f"{StorageCategory.transcripts.value}/{final_filename}"

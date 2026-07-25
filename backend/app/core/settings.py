@@ -20,6 +20,7 @@ class Settings:
             "postgresql://postgres:Ashish19@localhost:5432/AI_Meeting_Flow",
         )
     )
+    redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379/0"))
     secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "change-me-in-production"))
     jwt_algorithm: str = field(default_factory=lambda: os.getenv("JWT_ALGORITHM", "HS256"))
     access_token_expire_minutes: int = field(

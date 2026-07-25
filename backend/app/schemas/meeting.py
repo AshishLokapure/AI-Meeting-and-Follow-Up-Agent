@@ -24,3 +24,5 @@ class MeetingUploadResponse(BaseModel):
     message: str
     meeting: MeetingPublic
     storage_backend: str
+    job_id: str
+    job_status: str

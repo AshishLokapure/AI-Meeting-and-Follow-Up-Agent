@@ -4,7 +4,8 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.settings import get_settings
-from app.models import Meeting, User
+from app.models import BackgroundJob, Meeting, User
+from app.services.background_job_service import BackgroundJobService
 from app.utils import store_meeting_audio
 
 
@@ -14,7 +15,7 @@ class MeetingService:
         return datetime.now(timezone.utc)
 
     @classmethod
-    def upload_meeting(cls, db: Session, user: User, file: UploadFile, title: str | None = None) -> tuple[Meeting, str]:
+    def upload_meeting(cls, db: Session, user: User, file: UploadFile, title: str | None = None) -> tuple[Meeting, BackgroundJob, str]:
         stored_file = store_meeting_audio(file)
         meeting = Meeting(
             owner_id=user.id,
@@ -35,4 +36,6 @@ class MeetingService:
         )
         db.add(meeting)
         db.flush()
-        return meeting, get_settings().storage_backend
+
+        job = BackgroundJobService.create_meeting_pipeline_job(db, meeting)
+        return meeting, job, get_settings().storage_backend

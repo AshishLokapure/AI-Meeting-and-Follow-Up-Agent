@@ -11,3 +11,4 @@ email-validator==2.2.0
 python-multipart==0.0.9
 mutagen==1.47.0
 boto3==1.34.162
+celery[redis]==5.4.0
