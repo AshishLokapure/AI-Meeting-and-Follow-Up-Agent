@@ -24,7 +24,8 @@ class MeetingService:
             recording_filename=stored_file.filename,
             recording_mime_type=stored_file.content_type,
             recording_size_bytes=stored_file.size_bytes,
-            duration_minutes=max(1, round(stored_file.size_bytes / 1024 / 1024)),
+            duration_minutes=max(1, round((stored_file.duration_seconds or 0) / 60)),
+            duration_seconds=stored_file.duration_seconds,
             source_metadata={
                 "storage_backend": get_settings().storage_backend,
                 "uploaded_at": cls._utcnow().isoformat(),

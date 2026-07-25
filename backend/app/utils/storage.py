@@ -41,6 +41,7 @@ class StorageResult:
     filename: str
     size_bytes: int
     content_type: str | None
+    duration_seconds: float | None = None
 
 
 def _storage_root() -> Path:
@@ -108,6 +109,52 @@ def _persist_to_s3(category: StorageCategory, temp_path: Path, final_filename: s
     return _build_s3_url(settings.aws_bucket_name, settings.aws_region, storage_key)
 
 
+def _read_audio_duration(temp_path: Path) -> float:
+    audio = MutagenFile(str(temp_path))
+    if audio is None or not getattr(audio, "info", None) or not getattr(audio.info, "length", None):
+        temp_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not read audio duration")
+    return float(audio.info.length)
+
+
+def store_audio_upload(upload_file: UploadFile) -> StorageResult:
+    settings = get_settings()
+    suffix = validate_upload_file(upload_file, category=StorageCategory.audio)
+    upload_id = str(uuid4())
+    temp_path = _category_directory(StorageCategory.audio) / f"{upload_id}.tmp"
+
+    bytes_written = 0
+    with temp_path.open("wb") as target_file:
+        while chunk := upload_file.file.read(1024 * 1024):
+            bytes_written += len(chunk)
+            if bytes_written > settings.max_upload_size_mb * 1024 * 1024:
+                temp_path.unlink(missing_ok=True)
+                raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File exceeds maximum size")
+            target_file.write(chunk)
+
+    duration_seconds = _read_audio_duration(temp_path)
+    if duration_seconds > settings.max_meeting_duration_minutes * 60:
+        temp_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Meeting duration exceeds maximum allowed length")
+
+    final_filename = f"{upload_id}{suffix}"
+    if settings.storage_backend.lower() == "s3":
+        url = _persist_to_s3(StorageCategory.audio, temp_path, final_filename, upload_file.content_type)
+        storage_key = f"{settings.aws_s3_prefix.strip('/')}/{StorageCategory.audio.value}/{final_filename}" if settings.aws_s3_prefix.strip('/') else f"{StorageCategory.audio.value}/{final_filename}"
+    else:
+        url = _persist_to_local(StorageCategory.audio, temp_path, final_filename)
+        storage_key = f"{StorageCategory.audio.value}/{final_filename}"
+
+    return StorageResult(
+        url=url,
+        storage_key=storage_key,
+        filename=final_filename,
+        size_bytes=bytes_written,
+        content_type=upload_file.content_type,
+        duration_seconds=duration_seconds,
+    )
+
+
 def store_upload_file(
     upload_file: UploadFile,
     *,
@@ -146,7 +193,7 @@ def store_upload_file(
 
 
 def store_meeting_audio(upload_file: UploadFile) -> StorageResult:
-    return store_upload_file(upload_file, category=StorageCategory.audio)
+    return store_audio_upload(upload_file)
 
 
 def store_transcript_text(meeting_id: str, transcript_text: str) -> StorageResult:
