@@ -36,6 +36,7 @@ env/
 ENV/
 backend/venv/
 backend/.venv/
+backend/.env
 
 # Distribution / packaging
 *.egg
@@ -244,3 +245,5 @@ models/
 *.tfstate
 *.tfstate.*
 .terraform/
+
+.tools/

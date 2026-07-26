@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/app/auth-layout";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
+import { clearAuthSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({ meta: [{ title: "Reset password — Loop" }] }),
@@ -38,7 +39,7 @@ function ForgotPage() {
     <AuthLayout
       title="Reset your password"
       subtitle="We'll email you a secure reset link"
-      footer={<Link to="/login" className="font-semibold text-primary hover:underline">Back to sign in</Link>}
+      footer={<Link to="/login" onClick={clearAuthSession} className="font-semibold text-primary hover:underline">Back to sign in</Link>}
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-1.5">

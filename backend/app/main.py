@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -9,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1 import api_router
 from app.core.settings import get_settings
 from app.database import create_all_tables
+from app.services.whisper_service import preload_model
 import app.models  # noqa: F401
 
 
@@ -19,6 +21,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Path(settings.uploads_root).mkdir(parents=True, exist_ok=True)
     # Auto-create tables if they don't exist yet (dev convenience)
     create_all_tables()
+    try:
+        preload_model()
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Faster-Whisper preload skipped: %s", exc)
     yield
 
 

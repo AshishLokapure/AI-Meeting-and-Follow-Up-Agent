@@ -1,9 +1,12 @@
-﻿from celery.utils.log import get_task_logger
+from celery.utils.log import get_task_logger
 
+from app.core.settings import get_settings
 from app.database.session import SessionLocal
 from app.models import Meeting
 from app.models.enums import MeetingStatus
 from app.services import AIAnalysisService, BackgroundJobService, TranscriptProcessingService, TranscriptionService
+from app.services.ffmpeg_service import convert_video_to_audio
+from app.services.whisper_service import transcribe_audio
 from app.workers.celery_app import celery_app
 
 logger = get_task_logger(__name__)
@@ -25,7 +28,30 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             return {"job_id": job_id, "status": "failed", "message": "Meeting not found"}
 
         meeting.status = MeetingStatus.processing.value
-        transcript_result = TranscriptionService.transcribe_meeting(db, meeting)
+        pipeline_result = None
+        video_path, should_cleanup = TranscriptionService.resolve_audio_path(meeting)
+        try:
+            conversion = convert_video_to_audio(video_path)
+            whisper_result = transcribe_audio(conversion.path)
+            meeting.duration_seconds = conversion.duration_seconds
+            meeting.duration_minutes = max(1, round(conversion.duration_seconds / 60))
+            meeting.source_metadata = {
+                **(meeting.source_metadata or {}),
+                "audio_url": f"/uploads/audio/{conversion.path.name}",
+                "audio_storage_key": f"audio/{conversion.path.name}",
+            }
+            transcript_result = TranscriptionService.persist_transcript(
+                db,
+                meeting,
+                whisper_result.text,
+                language=whisper_result.language,
+                confidence_score=whisper_result.confidence_score,
+                model_name=whisper_result.model_name,
+            )
+        finally:
+            if should_cleanup:
+                video_path.unlink(missing_ok=True)
+
         cleanup_result = TranscriptProcessingService.clean_meeting_transcript(
             db,
             meeting,
@@ -49,6 +75,7 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             "summary": analysis_result.executive_summary,
             "decisions": analysis_result.decisions,
             "action_items": analysis_result.action_items,
+            "key_notes": (pipeline_result or {}).get("key_notes", []),
             "risks": analysis_result.risks,
         }
         BackgroundJobService.mark_succeeded(db, job_id, result=result)

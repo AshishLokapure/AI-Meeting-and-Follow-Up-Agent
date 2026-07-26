@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -32,6 +32,9 @@ class MeetingService:
                 "uploaded_at": cls._utcnow().isoformat(),
                 "original_filename": file.filename,
                 "storage_key": stored_file.storage_key,
+                "audio_url": stored_file.audio_url,
+                "audio_storage_key": stored_file.audio_storage_key,
+                "audio_filename": stored_file.audio_filename,
             },
         )
         db.add(meeting)

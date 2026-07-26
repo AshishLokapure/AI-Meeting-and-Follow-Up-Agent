@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
@@ -119,6 +119,45 @@ class TranscriptionService:
         return text, "fallback-stub", "en", 0.5
 
     @classmethod
+    def persist_transcript(
+        cls,
+        db: Session,
+        meeting: Meeting,
+        transcript_text: str,
+        language: str | None,
+        confidence_score: float | None,
+        model_name: str,
+    ) -> TranscriptResult:
+        if not transcript_text.strip():
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Transcription returned an empty transcript")
+
+        transcript_text = transcript_text.strip()
+        transcript_storage = store_transcript_text(meeting.id, transcript_text)
+        transcript = db.scalar(select(MeetingTranscript).where(MeetingTranscript.meeting_id == meeting.id))
+        if transcript is None:
+            transcript = MeetingTranscript(meeting_id=meeting.id, transcript_text=transcript_text)
+            db.add(transcript)
+
+        transcript.transcript_text = transcript_text
+        transcript.cleaned_text = transcript_text
+        transcript.language = language
+        transcript.confidence_score = confidence_score
+        transcript.source_uri = meeting.recording_url
+        transcript.word_count = len(transcript_text.split())
+        transcript.transcription_model = model_name
+        transcript.duration_seconds = float(meeting.duration_seconds or 0)
+        transcript.transcript_format = "text/plain"
+        transcript.transcript_storage_url = transcript_storage.url
+        meeting.status = MeetingStatus.transcribed.value
+        return TranscriptResult(
+            transcript_text=transcript_text,
+            language=language,
+            confidence_score=confidence_score,
+            word_count=transcript.word_count or 0,
+            transcript_storage_url=transcript_storage.url,
+            transcription_model=model_name,
+        )
+    @classmethod
     def transcribe_meeting(cls, db: Session, meeting: Meeting) -> TranscriptResult:
         audio_path, should_cleanup = cls.resolve_audio_path(meeting)
         language: str | None = None
@@ -143,32 +182,4 @@ class TranscriptionService:
             if should_cleanup:
                 audio_path.unlink(missing_ok=True)
 
-        if not transcript_text:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Transcription returned an empty transcript")
-
-        transcript_storage = store_transcript_text(meeting.id, transcript_text)
-        transcript = db.scalar(select(MeetingTranscript).where(MeetingTranscript.meeting_id == meeting.id))
-        if transcript is None:
-            transcript = MeetingTranscript(meeting_id=meeting.id, transcript_text=transcript_text)
-            db.add(transcript)
-
-        transcript.transcript_text = transcript_text
-        transcript.cleaned_text = transcript_text
-        transcript.language = language
-        transcript.confidence_score = confidence_score
-        transcript.source_uri = meeting.recording_url
-        transcript.word_count = len(transcript_text.split())
-        transcript.transcription_model = model_name
-        transcript.duration_seconds = float(meeting.duration_seconds or 0)
-        transcript.transcript_format = "text/plain"
-        transcript.transcript_storage_url = transcript_storage.url
-
-        meeting.status = MeetingStatus.transcribed.value
-        return TranscriptResult(
-            transcript_text=transcript_text,
-            language=transcript.language,
-            confidence_score=transcript.confidence_score,
-            word_count=transcript.word_count or 0,
-            transcript_storage_url=transcript_storage.url,
-            transcription_model=model_name,
-        )
+        return cls.persist_transcript(db, meeting, transcript_text, language, confidence_score, model_name)

@@ -177,13 +177,13 @@ class AIAnalysisService:
             return cls._build_fallback_analysis(transcript_text, settings.openai_model)
 
     @classmethod
-    def analyze_meeting(cls, db: Session, meeting: Meeting) -> AnalysisResult:
+    def analyze_meeting(cls, db: Session, meeting: Meeting, precomputed: AnalysisResult | None = None) -> AnalysisResult:
         transcript = db.scalar(select(MeetingTranscript).where(MeetingTranscript.meeting_id == meeting.id))
         if transcript is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Transcript not available for analysis")
 
         transcript_text = transcript.cleaned_text or transcript.transcript_text
-        analysis_result = cls._call_openai(transcript_text)
+        analysis_result = precomputed or cls._call_openai(transcript_text)
 
         summary = db.scalar(select(MeetingSummary).where(MeetingSummary.meeting_id == meeting.id))
         if summary is None:
