@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from dataclasses import dataclass
@@ -48,7 +48,6 @@ class TranscriptProcessingService:
             stripped = line.strip()
             if not stripped:
                 continue
-            stripped = SPEAKER_PREFIX_PATTERN.sub("", stripped)
             cleaned_lines.append(stripped)
         return cleaned_lines
 

@@ -127,6 +127,7 @@ class TranscriptionService:
         language: str | None,
         confidence_score: float | None,
         model_name: str,
+        speaker_segments: list[dict[str, Any]] | None = None,
     ) -> TranscriptResult:
         if not transcript_text.strip():
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Transcription returned an empty transcript")
@@ -148,6 +149,7 @@ class TranscriptionService:
         transcript.duration_seconds = float(meeting.duration_seconds or 0)
         transcript.transcript_format = "text/plain"
         transcript.transcript_storage_url = transcript_storage.url
+        transcript.speaker_segments = speaker_segments
         meeting.status = MeetingStatus.transcribed.value
         return TranscriptResult(
             transcript_text=transcript_text,

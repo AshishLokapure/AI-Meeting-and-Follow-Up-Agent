@@ -13,12 +13,19 @@ _model: Any | None = None
 _model_lock = Lock()
 
 @dataclass(frozen=True)
+class WhisperSegment:
+    start: float
+    end: float
+    text: str
+
+@dataclass(frozen=True)
 class WhisperTranscriptionResult:
     text: str
     language: str | None
     duration_seconds: float | None
     confidence_score: float | None
     model_name: str
+    segments: list[WhisperSegment]
 
 def get_model() -> Any:
     global _model
@@ -41,15 +48,24 @@ def transcribe_audio(audio_path: Path) -> WhisperTranscriptionResult:
     settings = get_settings()
     segments, info = get_model().transcribe(str(audio_path), language=settings.whisper_language, vad_filter=True)
     texts: list[str] = []
+    transcript_segments: list[WhisperSegment] = []
     confidences: list[float] = []
     for segment in segments:
         text = (segment.text or "").strip()
         if text:
             texts.append(text)
+            transcript_segments.append(WhisperSegment(float(getattr(segment, "start", 0) or 0), float(getattr(segment, "end", 0) or 0), text))
         avg_logprob = getattr(segment, "avg_logprob", None)
         if avg_logprob is not None:
             confidences.append(float(avg_logprob))
     transcript = " ".join(texts).strip()
     if not transcript:
         raise RuntimeError("Faster-Whisper returned an empty transcript")
-    return WhisperTranscriptionResult(transcript, getattr(info, "language", None), float(getattr(info, "duration", 0) or 0) or None, round(sum(confidences) / len(confidences), 4) if confidences else None, f"faster-whisper:{settings.whisper_model_name}")
+    return WhisperTranscriptionResult(
+        text=transcript,
+        language=getattr(info, "language", None),
+        duration_seconds=float(getattr(info, "duration", 0) or 0) or None,
+        confidence_score=round(sum(confidences) / len(confidences), 4) if confidences else None,
+        model_name=f"faster-whisper:{settings.whisper_model_name}",
+        segments=transcript_segments,
+    )

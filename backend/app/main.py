@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1 import api_router
 from app.core.settings import get_settings
 from app.database import create_all_tables
+from app.services.diarization_service import preload_pipeline
 from app.services.whisper_service import preload_model
 import app.models  # noqa: F401
 
@@ -23,6 +24,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     create_all_tables()
     try:
         preload_model()
+        if settings.diarization_enabled:
+            preload_pipeline()
     except Exception as exc:
         logging.getLogger(__name__).warning("Faster-Whisper preload skipped: %s", exc)
     yield

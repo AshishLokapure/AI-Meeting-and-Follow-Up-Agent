@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -18,6 +18,7 @@ class TranscriptPublic(BaseModel):
     duration_seconds: float | None = None
     transcript_format: str | None = None
     transcript_storage_url: str | None = None
+    speaker_segments: list[dict] | None = None
     created_at: datetime
     updated_at: datetime
 

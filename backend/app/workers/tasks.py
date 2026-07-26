@@ -5,6 +5,7 @@ from app.database.session import SessionLocal
 from app.models import Meeting
 from app.models.enums import MeetingStatus
 from app.services import AIAnalysisService, BackgroundJobService, TranscriptProcessingService, TranscriptionService
+from app.services.diarization_service import diarize_audio, merge_with_transcript
 from app.services.ffmpeg_service import convert_video_to_audio
 from app.services.whisper_service import transcribe_audio
 from app.workers.celery_app import celery_app
@@ -28,11 +29,20 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             return {"job_id": job_id, "status": "failed", "message": "Meeting not found"}
 
         meeting.status = MeetingStatus.processing.value
+        settings = get_settings()
         pipeline_result = None
         video_path, should_cleanup = TranscriptionService.resolve_audio_path(meeting)
         try:
             conversion = convert_video_to_audio(video_path)
             whisper_result = transcribe_audio(conversion.path)
+            transcript_text = whisper_result.text
+            speaker_segments = []
+            if settings.diarization_enabled:
+                try:
+                    diarization = diarize_audio(conversion.path)
+                    transcript_text, speaker_segments = merge_with_transcript(whisper_result.segments, diarization)
+                except Exception as exc:
+                    logger.warning("Speaker diarization skipped: %s", exc)
             meeting.duration_seconds = conversion.duration_seconds
             meeting.duration_minutes = max(1, round(conversion.duration_seconds / 60))
             meeting.source_metadata = {
@@ -43,10 +53,11 @@ def process_meeting_pipeline(self, job_id: str) -> dict:
             transcript_result = TranscriptionService.persist_transcript(
                 db,
                 meeting,
-                whisper_result.text,
+                transcript_text,
                 language=whisper_result.language,
                 confidence_score=whisper_result.confidence_score,
                 model_name=whisper_result.model_name,
+                speaker_segments=speaker_segments,
             )
         finally:
             if should_cleanup:

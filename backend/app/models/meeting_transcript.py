@@ -1,4 +1,5 @@
-﻿from sqlalchemy import Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -20,5 +21,6 @@ class MeetingTranscript(Base, TimestampMixin, UUIDPrimaryKeyMixin):
     duration_seconds: Mapped[float | None] = mapped_column(Float)
     transcript_format: Mapped[str | None] = mapped_column(String(50), default="text/plain", nullable=False)
     transcript_storage_url: Mapped[str | None] = mapped_column(Text)
+    speaker_segments: Mapped[list | None] = mapped_column(JSONB)
 
     meeting = relationship("Meeting", back_populates="transcript")
